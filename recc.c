@@ -78,24 +78,21 @@ Token *tokenize(char *p) {
   Token *cur = &head;
 
   while(*p) {
-    //printf("p:%s\n",p);
 
     //空白文字をスキップ
     if(isspace(*p)) {
-      //printf("p:%s\n",p);
       p++;
       continue;
     }
 
     if(*p == '+' || *p == '-') {
-      //printf("p1:%s\n",p);
-      //p++の意味がわからん
-      cur = new_token(TK_RESERVED,cur,p++);
+      //引数は後置インクリメントなので、関数に渡されるのはpの値
+      //curに関数の結果が渡された後にインクリメントする
+      cur = new_token(TK_RESERVED,cur,++p);
       continue;
     }
 
     if(isdigit(*p)) {
-      //printf("p:%s\n",p);
       cur = new_token(TK_NUM,cur,p);
       cur -> val = strtol(p,&p,10);
       continue;
@@ -125,6 +122,7 @@ Token *new_token(TokenKind kind,Token *cur,char *str) {
   Token *tok = calloc(1,sizeof(Token));
   tok -> kind = kind;
   tok -> str = str;
+  //ここのcurは一つ前のトークン。一つ前のトークンのnextが新しく作成したトークンを指す
   cur -> next = tok;
   return tok;
 }
