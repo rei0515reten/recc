@@ -24,14 +24,16 @@ struct Token {
 //現在着目しているトークン
 Token *token;
 
-void error(char *fmt, ...);
+//入力された文字列全体を指す
+char *user_input;
+
+void error_at(char *loc, char *fmt, ...);
 bool consume(char op);
 void expect(char op);
 int expect_number();
 bool at_eof();
 Token *new_token(TokenKind kind, Token *cur, char *str);
-Token *tokenize(char *p);
-
+Token *tokenize();
 
 int main(int argc,char **argv) {
   if(argc != 2){
@@ -39,8 +41,9 @@ int main(int argc,char **argv) {
     return 1;
   }
 
+  user_input = argv[1];
   //トークナイズする
-  token = tokenize(argv[1]);
+  token = tokenize();
 
   //アセンブリの前半部分を出力
   printf(".intel_syntax noprefix\n");
@@ -69,7 +72,8 @@ int main(int argc,char **argv) {
 
 
 //入力文字列pをトークナイズしてそれを返す
-Token *tokenize(char *p) {
+Token *tokenize() {
+  char *p = user_input;
   //ダミーのhead、入力の先頭の前に繋げる
   //headという構造体作成、その構造体のnextはNULL
   Token head;
@@ -88,7 +92,7 @@ Token *tokenize(char *p) {
     if(*p == '+' || *p == '-') {
       //引数は後置インクリメントなので、関数に渡されるのはpの値
       //curに関数の結果が渡された後にインクリメントする
-      cur = new_token(TK_RESERVED,cur,++p);
+      cur = new_token(TK_RESERVED,cur,p++);
       continue;
     }
 
@@ -98,7 +102,7 @@ Token *tokenize(char *p) {
       continue;
     }
 
-    error("トークナイズできません");
+    error_at(p,"expected a number");
   }
   new_token(TK_EOF,cur,p);
 
@@ -109,9 +113,10 @@ Token *tokenize(char *p) {
 //次のトークンが数値の場合、トークンを1つ読み進めてその数値を返す
 int expect_number() {
   if(token -> kind != TK_NUM){
-    error("数字ではありません");
+    error_at(token -> str,"expected a number");
   }
   int val = token -> val;
+  //次のトークンを見る
   token = token -> next;
   return val;
 }
@@ -130,7 +135,7 @@ Token *new_token(TokenKind kind,Token *cur,char *str) {
 //次のトークンが期待している記号のときは、トークンを1つ読み進める
 void expect(char op) {
   if(token -> kind != TK_RESERVED || token -> str[0] != op){
-    error("'%c'ではありません",op);
+    error_at(token -> str,"expected '%c'",op);
   }
   token = token -> next;
 }
@@ -146,9 +151,21 @@ bool consume(char op) {
 
 //エラーを報告するための関数
 //printfと同じ引数を取る
-void error(char *fmt, ...) {
+void error_at(char *loc, char *fmt, ...) {
   va_list ap;
   va_start(ap,fmt);
+
+  //入力文字列全体のアドレス？からエラー箇所のアドレス？を引くと、入力文字列の何バイト目にエラーがあるかわかる
+  //ポインタとポインタの差分を取る
+  //ポインタの減算は、内部でアドレスを引いた後にそのポインタが指している変数の型
+  //のバイト数(sizeof(変数の型))で割った結果を求めるようにコンパイラは動く
+  //この場合はcharなので/1している
+  //初めに定義した変数の方が、割り当てられるメモリのアドレス番号が小さいから？
+  int pos = loc - user_input;
+  //printf("pos:%d\n",pos);
+  fprintf(stderr, "%s\n", user_input);
+  fprintf(stderr, "%*s", pos, "");      //pos個の空白を出力
+  fprintf(stderr, "^ ");
   vfprintf(stderr,fmt,ap);
   fprintf(stderr,"\n");
   exit(1);
