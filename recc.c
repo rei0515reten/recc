@@ -20,6 +20,10 @@ typedef enum {
   ND_SUB,           // -
   ND_MUL,           // *
   ND_DIV,           // /
+  ND_EQ,            //==
+  ND_NE,            //!=
+  ND_LT,            //<
+  ND_LE,            //<=
   ND_NUM,           // 整数
 } NodeKind;
 
@@ -40,6 +44,7 @@ struct Token {
   Token *next;      //次の入力トークン
   int val;          //kindがTK_NUMの場合、その数値
   char *str;        //トークン文字列
+  int len;          //トークンの長さ
 };
 
 //現在着目しているトークン
@@ -49,18 +54,22 @@ Token *token;
 char *user_input;
 
 void error_at(char *loc, char *fmt, ...);
-bool consume(char op);
-void expect(char op);
+bool consume(char *op);
+void expect(char *op);
 int expect_number();
 bool at_eof();
-Token *new_token(TokenKind kind, Token *cur, char *str);
+Token *new_token(TokenKind kind, Token *cur, char *str,int len);
 Token *tokenize();
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
 Node *new_node_num(int val);
+bool startswith(char *p,char *q);
 Node *expr();
+Node *equality();
+Node *relational();
+Node *add();
 Node *mul();
-Node *primary();
 Node *unary();
+Node *primary();
 void gen(Node *node);
 
 
@@ -75,7 +84,7 @@ int main(int argc,char **argv) {
   user_input = argv[1];
   token = tokenize();
   //返ってくるnodeは抽象構文木
-  //expr,mul,primaryでトークン列をパースする
+  //トークン列をパースする
   Node *node = expr();
 
   //アセンブリの前半部分を出力
@@ -111,22 +120,34 @@ Token *tokenize() {
       continue;
     }
 
-    if(strchr("+-*/()",*p)) {
+    if(startswith(p,"==") || startswith(p,"!=") || startswith(p,"<=") || startswith(p,">=")) {
+      cur = new_token(TK_RESERVED,cur,p,2);
+      p += 2;
+      continue;
+    }
+
+
+    if(strchr("+-*/()<>",*p)) {
       //引数は後置インクリメントなので、関数に渡されるのはpの値
       //curに関数の結果が渡された後にインクリメントする
-      cur = new_token(TK_RESERVED,cur,p++);
+      //長さは１
+      cur = new_token(TK_RESERVED,cur,p++,1);
       continue;
     }
 
     if(isdigit(*p)) {
-      cur = new_token(TK_NUM,cur,p);
+      cur = new_token(TK_NUM,cur,p,0);
+      char *q = p;
+      //第２引数&pは、pに変換不可能な値があった場合の格納先
+      //変換可能：数値、変換不可能：文字
       cur -> val = strtol(p,&p,10);
+      cur -> len = p - q;
       continue;
     }
 
     error_at(p,"invalid token");
   }
-  new_token(TK_EOF,cur,p);
+  new_token(TK_EOF,cur,p,0);
 
   //headの次は入力文字列の先頭
   return head.next;
@@ -144,27 +165,28 @@ int expect_number() {
 }
 
 //新しいトークンを作成してcurに繋げる
-Token *new_token(TokenKind kind,Token *cur,char *str) {
+Token *new_token(TokenKind kind,Token *cur,char *str,int len) {
   //mallocと違い、あり当てられたメモリをゼロクリアする必要がない
   Token *tok = calloc(1,sizeof(Token));
   tok -> kind = kind;
   tok -> str = str;
+  tok -> len = len;
   //ここのcurは一つ前のトークン。一つ前のトークンのnextが新しく作成したトークンを指す
   cur -> next = tok;
   return tok;
 }
 
 //次のトークンが期待している記号のときは、トークンを1つ読み進める
-void expect(char op) {
-  if(token -> kind != TK_RESERVED || token -> str[0] != op){
-    error_at(token -> str,"expected '%c'",op);
+void expect(char *op) {
+  if(token -> kind != TK_RESERVED || strlen(op) != token -> len || memcmp(token -> str,op,token -> len)){
+    error_at(token -> str,"expected \"%s\"",op);
   }
   token = token -> next;
 }
 
 //次のトークンが期待している記号のときは、トークンを1つ読み進める
-bool consume(char op) {
-  if (token -> kind != TK_RESERVED || token -> str[0] != op){
+bool consume(char *op) {
+  if (token -> kind != TK_RESERVED || strlen(op) != token -> len || memcmp(token -> str,op,token -> len)){
     return false;
   }
   token = token -> next;
@@ -215,14 +237,59 @@ Node *new_node_num(int val) {
   return node;
 }
 
-//expr = mul ("+" mul | "-" mul)*
+bool startswith(char *p,char *q) {
+  return memcmp(p,q,strlen(q)) == 0;
+}
+
+//expr = equality
 Node *expr() {
+  return equality();
+}
+
+//equality = relational ("==" relational | "!=" relational)*
+Node *equality() {
+  Node *node = relational();
+
+  for(;;) {
+    if(consume("==")) {
+      node = new_node(ND_EQ,node,relational());
+    }else if (consume("!=")) {
+      node = new_node(ND_NE,node,relational());
+    }else {
+      return node;
+    }
+  }
+}
+
+//relational = add ("<" add | "<=" add | ">" add | ">=" add)*
+Node *relational() {
+  Node *node = add();
+
+  for(;;) {
+    if(consume("<")) {
+      node = new_node(ND_LT,node,add());
+    }else if(consume("<=")) {
+      node = new_node(ND_LE,node,add());
+    }else if(consume(">")) {
+      //addは木の左に展開される
+      //こういう構成はよくあるらしい
+      node = new_node(ND_LT,add(),node);
+    }else if(consume(">=")) {
+      node = new_node(ND_LE,add(),node);
+    }else {
+      return node;
+    }
+  }
+}
+
+//add = mul ("+" mul | "-" mul)*
+Node *add() {
   Node *node = mul();
 
   for(;;) {
-    if(consume('+')) {
+    if(consume("+")) {
       node = new_node(ND_ADD,node,mul());
-    }else if(consume('-')) {
+    }else if(consume("-")) {
       node = new_node(ND_SUB,node,mul());
     }else {
       //ここで返される抽象構文木は、演算子は左結合（返されるノードの左側の枝のほうが深くなる）
@@ -236,9 +303,9 @@ Node *mul() {
   Node *node = unary();
 
   for(;;) {
-    if(consume('*')) {
+    if(consume("*")) {
       node = new_node(ND_MUL,node,unary());
-    }else if(consume('/')) {
+    }else if(consume("/")) {
       node = new_node(ND_DIV,node,unary());
     }else {
       //ここで返される抽象構文木は、演算子は左結合（返されるノードの左側の枝のほうが深くなる）
@@ -247,32 +314,32 @@ Node *mul() {
   }
 }
 
-//primary = "(" expr ")" | num
-Node *primary() {
-  //次のトークンが"("なら、"(" expr ")"のはず
-  if(consume('(')) {
-    Node *node = expr();
-    expect(')');
-    return node;
-  }
-
-  //そうでなければ数値のはず
-  return new_node_num(expect_number());
-}
-
 //unary = ("+" | "-")? primary
 Node *unary(){
-  if(consume('+')) {
+  if(consume("+")) {
     //+XをXと置き換える
-    return primary();
-  }else if(consume('-')) {
+    return unary();
+  }else if(consume("-")) {
     //-Xを0-Xと置き換える
-    return new_node(ND_SUB,new_node_num(0),primary());
+    return new_node(ND_SUB,new_node_num(0),unary());
   }
 
   //＋もーもついていなければprimaryを呼び出す
   //＋、ーがついててもついてなくても適応する
   return primary();
+}
+
+//primary = "(" expr ")" | num
+Node *primary() {
+  //次のトークンが"("なら、"(" expr ")"のはず
+  if(consume("(")) {
+    Node *node = expr();
+    expect(")");
+    return node;
+  }
+
+  //そうでなければ数値のはず
+  return new_node_num(expect_number());
 }
 
 //x86-64のスタック操作命令
@@ -311,6 +378,39 @@ void gen(Node *node){
       printf("  cqo\n");
       //RDIは割られる値
       printf("  idiv rdi\n");
+      break;
+    case ND_EQ:
+      //cmp命令
+      //スタックから２つの整数をポップして比較を行う
+      //x86-64のcmp命令の結果はフラグレジスタにセットされる。
+      //cmp命令はフラグレジスタの全フィールド(ZFやOFなど)を更新する。
+      //更新するフィールドは命令によって違う。
+      printf("  cmp rax, rdi\n");
+      //sete命令
+      //ZFの値が１のとき(0であるとき)にALに1をセットする。
+      //それ以外の場合は0をセットする。
+      printf("  sete al\n");
+      //movzb命令
+      //seteがALに値をセットすると自動的にRAXもこうしんされることになるが、RAX全体に0か1を
+      //セットしたい場合は上位56ビットをゼロクリアしなければならない。
+      //それを行うのがこの命令。
+      //ALはRAXの下位8ビット。
+      printf("  movzb rax, al\n");
+      break;
+    case ND_NE:
+      printf("  cmp rax, rdi\n");
+      printf("  setne al\n");
+      printf("  movzb rax, al\n");
+      break;
+    case ND_LT:
+      printf("  cmp rax, rdi\n");
+      printf("  setl al\n");
+      printf("  movzb rax, al\n");
+      break;
+    case ND_LE:
+      printf("  cmp rax, rdi\n");
+      printf("  setle al\n");
+      printf("  movzb rax, al\n");
       break;
   }
 
