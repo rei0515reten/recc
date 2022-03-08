@@ -45,6 +45,10 @@ void error_at(char *loc, char *fmt, ...) {
   exit(1);
 }
 
+//指している部分が末尾であればtrue
+bool at_eof() {
+  return token -> kind == TK_EOF;
+}
 
 //入力文字列pをトークナイズしてそれを返す
 Token *tokenize() {
@@ -69,8 +73,13 @@ Token *tokenize() {
       continue;
     }
 
+    if(startswith(p,"=")) {
+      cur = new_token(TK_RESERVED,cur,p++,1);
+      continue;
+    }
 
-    if(strchr("+-*/()<>",*p)) {
+
+    if(strchr("+-*/()<>;",*p)) {
       //引数は後置インクリメントなので、関数に渡されるのはpの値
       //curに関数の結果が渡された後にインクリメントする
       //長さは１
@@ -88,6 +97,12 @@ Token *tokenize() {
       continue;
     }
 
+    //アルファベット1文字a〜zならば、TK_IDENT型のトークンを作る
+    if('a' <= *p && *p <= 'z') {
+      cur = new_token(TK_IDENT,cur,p++,1);
+      continue;
+    }
+
     error_at(p,"invalid token");
   }
   new_token(TK_EOF,cur,p,0);
@@ -95,7 +110,6 @@ Token *tokenize() {
   //headの次は入力文字列の先頭
   return head.next;
 }
-
 
 //次のトークンが数値の場合、トークンを1つ読み進めてその数値を返す
 int expect_number() {
@@ -127,7 +141,6 @@ bool consume(char *op) {
   return true;
 }
 
-
 //抽象構文木の新しいノードを作成
 //左辺と右辺を受け取る2項演算子
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs) {
@@ -148,12 +161,39 @@ Node *new_node_num(int val) {
   return node;
 }
 
+//program = stmt*
+void program() {
+  int i = 0;
 
-//expr = equality
-Node *expr() {
-  return equality();
+  while(!at_eof()) {
+    code[i++] = stmt();
+  }
+  code[i] = NULL;
 }
 
+//stmt = expr ";"
+Node *stmt() {
+  Node *node = expr();
+  expect(";");
+
+  return node;
+}
+
+//expr = assign
+Node *expr() {
+  return assign();
+}
+
+//assign = equality ("=" assign)?
+Node *assign() {
+  Node *node = equality();
+
+  if(consume("=")) {
+    node = new_node(ND_ASSIGN,node,assign());
+  }
+
+  return node;
+}
 
 //equality = relational ("==" relational | "!=" relational)*
 Node *equality() {
@@ -243,8 +283,24 @@ Node *unary(){
 }
 
 
-//primary = "(" expr ")" | num
+//primary = num | ident | "(" expr ")"
 Node *primary() {
+  Token *tok;
+
+  if(token -> kind == TK_IDENT){
+    tok = token;
+    token = token -> next;
+  }else{
+    tok = NULL;
+  }
+
+  if(tok) {
+    Node *node = calloc(1,sizeof(Node));
+    node -> kind = ND_LVAR;
+    node -> offset = (tok -> str[0] - 'a' + 1) * 8;
+    return node;
+  }
+
   //次のトークンが"("なら、"(" expr ")"のはず
   if(consume("(")) {
     Node *node = expr();

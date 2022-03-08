@@ -4,6 +4,7 @@
 //トークナイザー（トークンの種類）
 typedef enum {
   TK_RESERVED,      //記号
+  TK_IDENT,        //識別子
   TK_NUM,           //整数
   TK_EOF,           //入力の終わりを表すトークン
 } TokenKind;
@@ -14,10 +15,12 @@ typedef enum {
   ND_SUB,           // -
   ND_MUL,           // *
   ND_DIV,           // /
+  ND_ASSIGN,        //=
   ND_EQ,            //==
   ND_NE,            //!=
   ND_LT,            //<
   ND_LE,            //<=
+  ND_LVAR,          //ローカル変数
   ND_NUM,           // 整数
 } NodeKind;
 
@@ -28,6 +31,7 @@ struct Node {
   Node *lhs;        //左辺
   Node *rhs;        //右辺
   int val;          //kindがND_NUMの場合のみ使う
+  int offset;       //kindがND_LVARの場合のみ使う
 };
 
 typedef struct Token Token;
@@ -47,6 +51,9 @@ struct Token {
 extern Token *token;
 //入力された文字列全体を指す
 extern char *user_input;
+//パース結果のノードを順にストアする配列
+//最後はNULLを埋めてどこが最後なのかわかるようにする
+extern Node *code[100];
 
 void error_at(char *loc, char *fmt, ...);
 bool consume(char *op);
@@ -57,7 +64,10 @@ Token *tokenize();
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
 Node *new_node_num(int val);
 bool startswith(char *p,char *q);
+void program();
+Node *stmt();
 Node *expr();
+Node *assign();
 Node *equality();
 Node *relational();
 Node *add();
