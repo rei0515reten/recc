@@ -47,8 +47,12 @@ assert 1 '1>=0;'
 assert 1 '1>=1;'
 assert 0 '1>=2;'
 
-assert 1 'a = 1;'
-assert 5 'b = 1 + 4;'
-assert 6 'a = 1;b = 2 + 3;a + b;'
+#assert 1 'a = 1;'
+#assert 5 'b = 1 + 4;'
+#assert 6 'a = 1;b = 2 + 3;a + b;'
+assert 10 'foo = 3;bar = 7;foo + bar;'
+assert 15 'hoge = 3 + 5;hogehoge = 7;hoge + hogehoge;'
+assert 4 'foo=7;bar=3;foo-bar;'
+assert 15 'hoge=3+5;hogehoge=7;hoge+hogehoge;'
 
 echo OK

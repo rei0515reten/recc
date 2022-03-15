@@ -47,6 +47,15 @@ struct Token {
   int len;          //トークンの長さ
 };
 
+typedef struct LVar LVar;
+
+struct LVar {
+  LVar *next;       //次の変数かNULL
+  char *name;       //変数の名前
+  int len;          //名前の長さ
+  int offset;       //RBPからのオフセット
+};
+
 //現在着目しているトークン
 extern Token *token;
 //入力された文字列全体を指す
@@ -54,6 +63,8 @@ extern char *user_input;
 //パース結果のノードを順にストアする配列
 //最後はNULLを埋めてどこが最後なのかわかるようにする
 extern Node *code[100];
+//ローカル変数
+extern LVar *locals;
 
 void error_at(char *loc, char *fmt, ...);
 bool consume(char *op);
@@ -74,6 +85,7 @@ Node *add();
 Node *mul();
 Node *unary();
 Node *primary();
+LVar *find_lvar(Token *tok);
 void gen(Node *node);
 
 

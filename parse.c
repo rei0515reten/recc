@@ -6,11 +6,11 @@
 #include <string.h>
 #include "recc.h"
 
+LVar *locals;
 
 bool startswith(char *p,char *q) {
   return memcmp(p,q,strlen(q)) == 0;
 }
-
 
 //新しいトークンを作成してcurに繋げる
 Token *new_token(TokenKind kind,Token *cur,char *str,int len) {
@@ -60,6 +60,7 @@ Token *tokenize() {
   //Tokenを直接触らないためのcur
   Token *cur = &head;
 
+
   while(*p) {
     //空白文字をスキップ
     if(isspace(*p)) {
@@ -97,9 +98,24 @@ Token *tokenize() {
       continue;
     }
 
-    //アルファベット1文字a〜zならば、TK_IDENT型のトークンを作る
-    if('a' <= *p && *p <= 'z') {
-      cur = new_token(TK_IDENT,cur,p++,1);
+    //ローカル変数をトークナイズ
+    if(isalpha(*p) || *p == '_') {
+      char *q = p;
+
+      while(*p != ' ' && *p != ';'){
+        //foo+bar;(ok)
+        if(strchr("+-*/()<>=",*p)) {
+          break;
+        }
+
+        //foo@;(ng)
+        if(strchr("@:$#&",*p)) {
+          error_at(p,"Illegal variable");
+        }
+        p++;
+      }
+      cur = new_token(TK_IDENT,cur,q,p - q);
+
       continue;
     }
 
@@ -297,7 +313,28 @@ Node *primary() {
   if(tok) {
     Node *node = calloc(1,sizeof(Node));
     node -> kind = ND_LVAR;
-    node -> offset = (tok -> str[0] - 'a' + 1) * 8;
+
+    LVar *lvar = find_lvar(tok);
+
+    if(lvar) {
+      node -> offset = lvar -> offset;
+    }else {
+      //localsの初期化
+      if(locals == NULL) {
+        locals = calloc(1,sizeof(LVar));
+        //リストの最後はNULL
+        locals -> next = NULL;
+      }
+
+      lvar = calloc(1,sizeof(LVar));
+      //リストの先頭に追加していく
+      lvar -> next = locals;
+      lvar -> name = tok -> str;
+      lvar -> len = tok -> len;
+      lvar -> offset = locals -> offset + 8;
+      node -> offset = lvar -> offset;
+      locals = lvar;
+    }
     return node;
   }
 
@@ -310,4 +347,13 @@ Node *primary() {
 
   //そうでなければ数値のはず
   return new_node_num(expect_number());
+}
+
+LVar *find_lvar(Token *tok) {
+  for(LVar *var = locals;var;var = var -> next) {
+    if(var -> len == tok -> len && !memcmp(tok -> str,var -> name,var -> len)){
+      return var;
+    }
+  }
+  return NULL;
 }
