@@ -86,6 +86,7 @@ Node *mul();
 Node *unary();
 Node *primary();
 LVar *find_lvar(Token *tok);
+Token *consume_ident(Token *tok);
 void gen(Node *node);
 
 
