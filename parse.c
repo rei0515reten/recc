@@ -74,11 +74,22 @@ void program() {
   code[i] = NULL;
 }
 
-//stmt = expr ";"
+//stmt = expr ";" | "return" expr ";"
 Node *stmt() {
-  Node *node = expr();
-  expect(";");
+  Node *node;
 
+  if(token -> kind == TK_RETURN) {
+    node = calloc(1,sizeof(Node));
+    node -> kind = ND_RETURN;
+    token = token -> next;
+    node -> lhs = expr();
+  }else {
+    node = expr();
+  }
+
+  if(!consume(";")) {
+    error_at(token -> str,"';'ではないトークンです");
+  }
   return node;
 }
 

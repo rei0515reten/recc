@@ -44,6 +44,13 @@ Token *tokenize() {
       continue;
     }
 
+    if(strncmp(p,"return",6) == 0 && !is_alnum(p[6])) {
+      cur = new_token(TK_RETURN,cur,p,6);
+      p += 6;
+
+      continue;
+    }
+
     if(isdigit(*p)) {
       cur = new_token(TK_NUM,cur,p,0);
       char *q = p;
@@ -118,4 +125,9 @@ void error_at(char *loc, char *fmt, ...) {
   vfprintf(stderr,fmt,ap);
   fprintf(stderr,"\n");
   exit(1);
+}
+
+//returnの後ろに来てはいけない文字であるか
+int is_alnum(char c) {
+  return ('a' <= c && c <= 'z') || ('A' <= c && c <= '9') || (c == '_');
 }

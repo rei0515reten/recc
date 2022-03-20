@@ -7,6 +7,7 @@ typedef enum {
   TK_IDENT,        //識別子
   TK_NUM,           //整数
   TK_EOF,           //入力の終わりを表すトークン
+  TK_RETURN,
 } TokenKind;
 
 //抽象構文木（ノードの種類）
@@ -22,6 +23,7 @@ typedef enum {
   ND_LE,            //<=
   ND_LVAR,          //ローカル変数
   ND_NUM,           // 整数
+  ND_RETURN,        //return
 } NodeKind;
 
 typedef struct Node Node;
@@ -87,6 +89,7 @@ Node *unary();
 Node *primary();
 LVar *find_lvar(Token *tok);
 Token *consume_ident(Token *tok);
+int is_alnum(char c);
 void gen(Node *node);
 
 

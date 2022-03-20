@@ -54,5 +54,7 @@ assert 10 'foo = 3;bar = 7;foo + bar;'
 assert 15 'hoge = 3 + 5;hogehoge = 7;hoge + hogehoge;'
 assert 4 'foo=7;bar=3;foo-bar;'
 assert 15 'hoge=3+5;hogehoge=7;hoge+hogehoge;'
+assert 8 'return 8;'
+assert 6 'a = 4;b = 4;return a + b / 2;'
 
 echo OK

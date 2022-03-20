@@ -1,4 +1,4 @@
-CFLAGS=-std=c11 -g -static
+CFLAGS=-std=c11 -g3 -O0 -static
 SRCS=$(wildcard *.c)
 OBJS=$(SRCS:.c=.o)
 
@@ -10,6 +10,7 @@ $(OBJS): recc.h
 test: recc
 	./test.sh
 
-clean: rm -f recc *.o *~ tmp*
+clean:
+		rm -f recc *.o *~ tmp*
 
 .PHONY: test clean
