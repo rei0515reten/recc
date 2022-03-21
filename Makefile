@@ -1,5 +1,6 @@
 CFLAGS=-std=c11 -g3 -O0 -static
 SRCS=$(wildcard *.c)
+SRCS:=$(filter-out recc.c,$(SRCS))
 OBJS=$(SRCS:.c=.o)
 
 recc: $(OBJS)
