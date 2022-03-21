@@ -1,3 +1,3 @@
 # recc
 
-![](https://github.com/rei05reten/recc/workflows/c-cpp.yml/badge.svg)
+[![C/C++ CI](https://github.com/rei0515reten/recc/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/rei0515reten/recc/actions/workflows/c-cpp.yml)
