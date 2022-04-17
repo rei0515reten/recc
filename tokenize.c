@@ -44,6 +44,14 @@ Token *tokenize() {
       continue;
     }
 
+    if(strcmp(p,"if",2) == 0) {
+      cur = new_token(TK_IF,cur,p,2);
+      p += 3;
+
+      continue;
+    }
+
+
     if(strncmp(p,"return",6) == 0 && !is_alnum(p[6])) {
       cur = new_token(TK_RETURN,cur,p,6);
       p += 6;

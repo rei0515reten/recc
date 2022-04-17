@@ -115,6 +115,8 @@ void gen(Node *node){
       printf("  setle al\n");
       printf("  movzb rax, al\n");
       break;
+    case ND_IF:
+    
   }
 
   //RAXの値（演算の結果）をスタックにpush

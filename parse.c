@@ -74,7 +74,15 @@ void program() {
   code[i] = NULL;
 }
 
-//stmt = expr ";" | "return" expr ";"
+//stmt = expr ";" | "return" expr ";" | "if" "(" expr ")" stmt ("else" stmt)?
+//       | "while" "(" expr ")" stmt
+//       | "for" "(" expr? ";" expr? ";" expr? ")" stmt
+// "if" ( cond ) then "else" els
+// "for" ( init; cond; inc ) body
+// "while" ( cond ) body
+// "do" body "while" ( cond )
+// "switch" ( cond ) body
+// "case" val ":" body
 Node *stmt() {
   Node *node;
 
@@ -85,6 +93,22 @@ Node *stmt() {
     node -> lhs = expr();
   }else {
     node = expr();
+  }
+
+  if(token -> kind == TK_IF) {
+    node = calloc(1,sizeof(Node));
+    node -> kind = ND_IF;
+    expect("(");
+    node -> cond = expr();
+    expect(")");
+
+    node -> then = stmt();
+
+    if(consume(TK_ELSE)) {
+      node -> els = stmt();
+    }
+
+    return node;
   }
 
   if(!consume(";")) {
