@@ -116,7 +116,13 @@ void gen(Node *node){
       printf("  movzb rax, al\n");
       break;
     case ND_IF:
-    
+      printf("  pop rax\n");
+      printf("  cmp rax, 0");
+      printf("  je .Lelese001\n");
+      printf("  jmp .Lend0002\n");
+      printf(".Lelse001\n");
+      printf(".Lend002\n");
+
   }
 
   //RAXの値（演算の結果）をスタックにpush

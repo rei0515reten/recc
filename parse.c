@@ -91,11 +91,8 @@ Node *stmt() {
     node -> kind = ND_RETURN;
     token = token -> next;
     node -> lhs = expr();
-  }else {
-    node = expr();
-  }
 
-  if(token -> kind == TK_IF) {
+  }else if(token -> kind == TK_IF) {
     node = calloc(1,sizeof(Node));
     node -> kind = ND_IF;
     expect("(");
@@ -108,7 +105,8 @@ Node *stmt() {
       node -> els = stmt();
     }
 
-    return node;
+  }else {
+    node = expr();
   }
 
   if(!consume(";")) {
