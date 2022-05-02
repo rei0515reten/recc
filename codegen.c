@@ -53,8 +53,8 @@ void gen(Node *node){
     }
 
       //左から下る
-      gen(node -> lhs);
-      gen(node -> rhs);
+      //gen(node -> lhs);
+      //gen(node -> rhs);
 
       //スタックトップから順にRDI,RAXにpop
       printf("  pop rdi\n");
@@ -115,15 +115,29 @@ void gen(Node *node){
       printf("  setle al\n");
       printf("  movzb rax, al\n");
       break;
+
+    case ND_IFELSE:
+      if(node -> kind == ND_IFELSE) {
+        printf("  je .Lelese001\n");
+        printf("  jmp .Lend0002\n");
+        printf(".Lelse001\n");
+        printf(".Lend002\n");
+      }else {
+        printf("  je .Lend001\n");
+        printf(".Lend001\n");
+      }
+
     case ND_IF:
       printf("  pop rax\n");
       printf("  cmp rax, 0");
-      printf("  je .Lelese001\n");
-      printf("  jmp .Lend0002\n");
-      printf(".Lelse001\n");
-      printf(".Lend002\n");
+      break;
 
   }
+
+  //左から下る
+  gen(node -> lhs);
+  gen(node -> rhs);
+  gen(node -> els);
 
   //RAXの値（演算の結果）をスタックにpush
   printf("  push rax\n");

@@ -56,5 +56,6 @@ assert 4 'foo=7;bar=3;foo-bar;'
 assert 15 'hoge=3+5;hogehoge=7;hoge+hogehoge;'
 assert 8 'return 8;'
 assert 6 'a = 4;b = 4;return a + b / 2;'
+assert   'a = 0;if (a==0) b=3 else '
 
 echo OK

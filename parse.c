@@ -99,6 +99,10 @@ Node *stmt() {
     node -> cond = expr();
     expect(")");
 
+    Token *tmp = token -> next;
+    if(tmp -> kind == TK_ELSE) {
+      node -> kind = ND_IFELSE;
+    }
     node -> then = stmt();
 
     if(consume(TK_ELSE)) {
