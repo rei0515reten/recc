@@ -52,9 +52,15 @@ void gen(Node *node){
       return;
     }
 
+    if(node -> kind == ND_IF || node -> kind == ND_IFELSE) {
+      gen(node -> cond);
+      gen(node -> then);
+      gen(node -> els);
+    } else {
       //左から下る
-      //gen(node -> lhs);
-      //gen(node -> rhs);
+      gen(node -> lhs);
+      gen(node -> rhs);
+    }
 
       //スタックトップから順にRDI,RAXにpop
       printf("  pop rdi\n");
@@ -134,10 +140,6 @@ void gen(Node *node){
 
   }
 
-  //左から下る
-  gen(node -> lhs);
-  gen(node -> rhs);
-  gen(node -> els);
 
   //RAXの値（演算の結果）をスタックにpush
   printf("  push rax\n");

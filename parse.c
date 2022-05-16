@@ -105,7 +105,7 @@ Node *stmt() {
     }
     node -> then = stmt();
 
-    if(consume(TK_ELSE)) {
+    if(token -> kind == TK_ELSE) {
       node -> els = stmt();
     }
 
