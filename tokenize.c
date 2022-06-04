@@ -52,6 +52,7 @@ Token *tokenize() {
     }
 
     if(strncmp(p,"else",4) == 0) {
+      fprintf(stderr, "KOYAMASANDAYOOOO\n");
       cur = new_token(TK_ELSE,cur,p,4);
       p += 4;
       continue;

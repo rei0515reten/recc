@@ -86,6 +86,8 @@ void program() {
 Node *stmt() {
   Node *node;
 
+  fprintf(stderr, "token is %d\n",token -> kind);
+
   if(token -> kind == TK_RETURN) {
     node = calloc(1,sizeof(Node));
     node -> kind = ND_RETURN;
@@ -95,23 +97,27 @@ Node *stmt() {
   }else if(token -> kind == TK_IF) {
     node = calloc(1,sizeof(Node));
     node -> kind = ND_IF;
+    token = token -> next;
     expect("(");
     node -> cond = expr();
     expect(")");
 
-    Token *tmp = token -> next;
-    if(tmp -> kind == TK_ELSE) {
-      node -> kind = ND_IFELSE;
-    }
     node -> then = stmt();
 
-    if(token -> kind == TK_ELSE) {
-      node -> els = stmt();
-    }
+    fprintf(stderr, "if no naka token is %d\n",token -> kind);
 
+    //Token *tmp = token -> next;
+  }else if(token -> kind == TK_ELSE) {
+    fprintf(stderr, "KOYAMA\n");
+    node = calloc(1,sizeof(Node));
+    node -> kind = ND_IFELSE;
+    token = token -> next;
+    node -> els = stmt();
   }else {
     node = expr();
   }
+
+  fprintf(stderr, "if DETA token is %d\n",token -> kind);
 
   if(!consume(";")) {
     error_at(token -> str,"';'ではないトークンです");
