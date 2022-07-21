@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include "recc.h"
+#include <assert.h>
 
 LVar *locals;
 
@@ -86,14 +87,11 @@ void program() {
 Node *stmt() {
   Node *node;
 
-  fprintf(stderr, "token is %d\n",token -> kind);
-
   if(token -> kind == TK_RETURN) {
     node = calloc(1,sizeof(Node));
     node -> kind = ND_RETURN;
     token = token -> next;
     node -> lhs = expr();
-
   }else if(token -> kind == TK_IF) {
     node = calloc(1,sizeof(Node));
     node -> kind = ND_IF;
@@ -104,20 +102,17 @@ Node *stmt() {
 
     node -> then = stmt();
 
-    fprintf(stderr, "if no naka token is %d\n",token -> kind);
-
+    return node;
     //Token *tmp = token -> next;
-  }else if(token -> kind == TK_ELSE) {
+  /*}else if(token -> kind == TK_ELSE) {
     fprintf(stderr, "KOYAMA\n");
     node = calloc(1,sizeof(Node));
     node -> kind = ND_IFELSE;
     token = token -> next;
-    node -> els = stmt();
+    node -> els = stmt();*/
   }else {
     node = expr();
   }
-
-  fprintf(stderr, "if DETA token is %d\n",token -> kind);
 
   if(!consume(";")) {
     error_at(token -> str,"';'ではないトークンです");

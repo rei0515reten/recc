@@ -18,6 +18,14 @@ void gen_lval(Node *node) {
   printf("  push rax\n");
 }
 
+void cmp(){
+
+}
+
+void jmp(Node *node){
+
+}
+
 //x86-64のスタック操作命令
 void gen(Node *node){
   if(node -> kind == ND_RETURN) {
@@ -55,7 +63,7 @@ void gen(Node *node){
     if(node -> kind == ND_IF || node -> kind == ND_IFELSE) {
       gen(node -> cond);
       gen(node -> then);
-      gen(node -> els);
+      //gen(node -> els);
     } else {
       //左から下る
       gen(node -> lhs);
@@ -121,25 +129,19 @@ void gen(Node *node){
       printf("  setle al\n");
       printf("  movzb rax, al\n");
       break;
-
-    case ND_IFELSE:
-      if(node -> kind == ND_IFELSE) {
-        printf("  je .Lelese001\n");
-        printf("  jmp .Lend0002\n");
-        printf(".Lelse001\n");
-        printf(".Lend002\n");
-      }else {
-        printf("  je .Lend001\n");
-        printf(".Lend001\n");
-      }
-
     case ND_IF:
-      printf("  pop rax\n");
-      printf("  cmp rax, 0");
+      gen(node -> cond);          //genでは(node->cond)->kindを見る
+      cmp();
+      jmp(node -> cond);          //この関数内でラベルelsかendか見る
+      gen(node -> then);
+      if(node -> els){
+        printf("  jmp end:\n");
+        printf("els:\n");
+        gen(node -> els);
+      }
+      printf("end:\n");
       break;
-
   }
-
 
   //RAXの値（演算の結果）をスタックにpush
   printf("  push rax\n");

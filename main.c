@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include "recc.h"
+#include <assert.h>
 
 Token *token;
 //入力された文字列全体を指す
@@ -40,7 +41,6 @@ int main(int argc,char **argv) {
   //codeの配列の;区切りの式を先頭から順にコード生成
   for(int i = 0;code[i];i++){
     gen(code[i]);
-
     // 式の評価結果としてスタックに一つの値が残っているはずなので、スタックが溢れないようにポップしておく
     printf("  pop rax\n");
   }
