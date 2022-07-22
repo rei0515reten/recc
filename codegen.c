@@ -23,7 +23,11 @@ void cmp(){
 }
 
 void jmp(Node *node){
-
+  switch (node -> kind) {
+    case ND_NE:
+      printf("  jnz else\n");
+      return;
+  }
 }
 
 //x86-64のスタック操作命令
@@ -60,7 +64,7 @@ void gen(Node *node){
       return;
     }
 
-    if(node -> kind == ND_IF || node -> kind == ND_IFELSE) {
+    if(node -> kind == ND_IF) {
       gen(node -> cond);
       gen(node -> then);
       //gen(node -> els);
@@ -131,7 +135,8 @@ void gen(Node *node){
       break;
     case ND_IF:
       gen(node -> cond);          //genでは(node->cond)->kindを見る
-      cmp();
+      //cmp();
+      printf("cmp rax, rdi\n");
       jmp(node -> cond);          //この関数内でラベルelsかendか見る
       gen(node -> then);
       if(node -> els){

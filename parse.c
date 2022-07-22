@@ -99,18 +99,16 @@ Node *stmt() {
     expect("(");
     node -> cond = expr();
     expect(")");
-
     node -> then = stmt();
 
+    if(token -> kind == TK_ELSE) {
+      token = token -> next;
+      node -> els = stmt();
+    }
+
+
     return node;
-    //Token *tmp = token -> next;
-  /*}else if(token -> kind == TK_ELSE) {
-    fprintf(stderr, "KOYAMA\n");
-    node = calloc(1,sizeof(Node));
-    node -> kind = ND_IFELSE;
-    token = token -> next;
-    node -> els = stmt();*/
-  }else {
+  }else{
     node = expr();
   }
 
