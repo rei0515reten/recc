@@ -23,9 +23,10 @@ void cmp(){
 }
 
 void jmp(Node *node){
+  //fprintf(stderr,"kind : %d\n",node->kind);
   switch (node -> kind) {
     case ND_NE:
-      printf("  jnz else\n");
+      printf("  jz end\n");
       return;
   }
 }
@@ -64,19 +65,16 @@ void gen(Node *node){
       return;
     }
 
-    if(node -> kind == ND_IF) {
-      gen(node -> cond);
-      gen(node -> then);
-      //gen(node -> els);
-    } else {
-      //左から下る
+    if(node -> kind != ND_IF) {
       gen(node -> lhs);
       gen(node -> rhs);
-    }
 
       //スタックトップから順にRDI,RAXにpop
       printf("  pop rdi\n");
       printf("  pop rax\n");
+    }
+
+
 
   switch(node -> kind) {
     case ND_ADD:
@@ -136,11 +134,11 @@ void gen(Node *node){
     case ND_IF:
       gen(node -> cond);          //genでは(node->cond)->kindを見る
       //cmp();
-      printf("cmp rax, rdi\n");
+      printf("  cmp rax, 0\n");
+      //printf("  jnz els\n");
       jmp(node -> cond);          //この関数内でラベルelsかendか見る
       gen(node -> then);
       if(node -> els){
-        printf("  jmp end:\n");
         printf("els:\n");
         gen(node -> els);
       }

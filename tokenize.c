@@ -81,7 +81,7 @@ Token *tokenize() {
 
       while(*p != ' ' && *p != ';'){
         //foo+bar;(ok)
-        if(strchr("+-*/()<>=",*p)) {
+        if(strchr("+-*/()<>=!",*p)) {
           break;
         }
 
