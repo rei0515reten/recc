@@ -18,19 +18,6 @@ void gen_lval(Node *node) {
   printf("  push rax\n");
 }
 
-void cmp(){
-
-}
-
-void jmp(Node *node){
-  //fprintf(stderr,"kind : %d\n",node->kind);
-  switch (node -> kind) {
-    case ND_NE:
-      printf("  jz end\n");
-      return;
-  }
-}
-
 //x86-64のスタック操作命令
 void gen(Node *node){
   if(node -> kind == ND_RETURN) {
@@ -133,11 +120,18 @@ void gen(Node *node){
       break;
     case ND_IF:
       gen(node -> cond);          //genでは(node->cond)->kindを見る
-      //cmp();
-      printf("  cmp rax, 0\n");
-      //printf("  jnz els\n");
-      jmp(node -> cond);          //この関数内でラベルelsかendか見る
+      //fprintf(stderr,"node->cond->kind : %d\n",node->cond->kind);
+      //conditionの演算が変わるとraxの値が変わる？
+      printf("  cmp rax, 0\n");   //raxが0のときelse
+
+      if(node -> els) {
+        printf("  jz els\n");
+      }else{
+        printf("  jz end\n");
+      }
+
       gen(node -> then);
+
       if(node -> els){
         printf("els:\n");
         gen(node -> els);
