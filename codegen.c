@@ -45,10 +45,10 @@ void gen(Node *node){
       gen_lval(node -> lhs);
       gen(node -> rhs);
 
-      printf("  pop rdi\n");
       printf("  pop rax\n");
-      printf("  mov [rax], rdi\n");
-      printf("  push rdi\n");
+      printf("  pop rdi\n");
+      printf("  mov [rdi], rax\n");
+      printf("  push rax\n");
       return;
     }
 
@@ -120,19 +120,18 @@ void gen(Node *node){
       break;
     case ND_IF:
       gen(node -> cond);          //genでは(node->cond)->kindを見る
-      //fprintf(stderr,"node->cond->kind : %d\n",node->cond->kind);
-      //conditionの演算が変わるとraxの値が変わる？
       printf("  cmp rax, 0\n");   //raxが0のときelse
 
       if(node -> els) {
-        printf("  jz els\n");
+        printf("  je els\n");
       }else{
-        printf("  jz end\n");
+        printf("  je end\n");
       }
 
       gen(node -> then);
 
       if(node -> els){
+        printf("  jmp end\n");
         printf("els:\n");
         gen(node -> els);
       }
