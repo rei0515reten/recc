@@ -57,6 +57,11 @@ Token *tokenize() {
       continue;
     }
 
+    if(strncmp(p,"while",5) == 0) {
+      cur = new_token(TK_WHILE,cur,p,5);
+      p += 5;
+      continue;
+    }
 
     if(strncmp(p,"return",6) == 0 && !is_alnum(p[6])) {
       cur = new_token(TK_RETURN,cur,p,6);

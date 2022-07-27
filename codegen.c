@@ -137,6 +137,17 @@ void gen(Node *node){
       }
       printf("end:\n");
       break;
+    case ND_WHILE:
+      printf("start:\n");
+      gen(node -> cond);
+      printf("  cmp rax, 0\n");   //raxが0のときelse
+      printf("  je end\n");
+
+      gen(node -> then);
+
+      printf("  jmp start:\n");
+      printf("end:\n");
+      break;
   }
 
   //RAXの値（演算の結果）をスタックにpush

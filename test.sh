@@ -73,5 +73,7 @@ assert 1 'foo = 3;if (foo!=0) 4>3; else return 5;'
 assert 5 'foo = 0;if (foo!=0) return 4; else return 5;'
 assert 3 'foo = 4;if (foo>0) return 3; else return 5;'
 assert 4 'hoge = 0;if (hoge<0) b=3; else b=4;'
+assert 3 'a = 2;while (a != 3) 2+1;'
+assert 10 'while (a != 10) a+1;'
 
 echo OK
