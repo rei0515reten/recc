@@ -18,6 +18,11 @@ void gen_lval(Node *node) {
   printf("  push rax\n");
 }
 
+static int count() {
+  static int i = 1;
+  return i++;
+}
+
 //x86-64のスタック操作命令
 void gen(Node *node){
   if(node -> kind == ND_RETURN) {
@@ -74,33 +79,12 @@ void gen(Node *node){
       printf("  imul rax, rdi\n");
       break;
     case ND_DIV:
-      //idiv ➔ 符号あり除算を行う命令
-      //x86-64のidivの仕様
-      //暗黙のうちに、RDXとRAXを取り、その2つを合わせたものを128ビット整数とみなす。
-      //その整数を引数のレジスタ（今回はRDI）の64ビットの値で割り、商をRAX、余りをRAXにセットする。
-      //という仕様。
-      //RDXとRAX(128bit) / RDI(64bit) = RAX(商)  RAX(余り)
-      //cqo命令を使うと、RAXに入っている64ビットの値を128ビットに伸ばしてRDXとRAXにセットする
       printf("  cqo\n");
-      //RDIは割られる値
-      printf("  idiv rdi\n");
+      printf("  idiv rdi\n");       //RDIは割られる値
       break;
     case ND_EQ:
-      //cmp命令
-      //スタックから２つの整数をポップして比較を行う
-      //x86-64のcmp命令の結果はフラグレジスタにセットされる。
-      //cmp命令はフラグレジスタの全フィールド(ZFやOFなど)を更新する。
-      //更新するフィールドは命令によって違う。
       printf("  cmp rax, rdi\n");
-      //sete命令
-      //ZFの値が１のとき(0であるとき)にALに1をセットする。
-      //それ以外の場合は0をセットする。
-      printf("  sete al\n");
-      //movzb命令
-      //seteがALに値をセットすると自動的にRAXもこうしんされることになるが、RAX全体に0か1を
-      //セットしたい場合は上位56ビットをゼロクリアしなければならない。
-      //それを行うのがこの命令。
-      //ALはRAXの下位8ビット。
+      printf("  sete al\n");        //ZFの値が１のとき(値が0であるとき)にALに1をセットする。
       printf("  movzb rax, al\n");
       break;
     case ND_NE:
@@ -119,34 +103,36 @@ void gen(Node *node){
       printf("  movzb rax, al\n");
       break;
     case ND_IF:
+      int c = count();
       gen(node -> cond);          //genでは(node->cond)->kindを見る
       printf("  cmp rax, 0\n");   //raxが0のときelse
 
       if(node -> els) {
-        printf("  je els\n");
+        printf("  je els.%d\n",c);
       }else{
-        printf("  je end\n");
+        printf("  je end.%d\n",c);
       }
 
       gen(node -> then);
 
       if(node -> els){
-        printf("  jmp end\n");
-        printf("els:\n");
+        printf("  jmp end.%d\n",c);
+        printf("els.%d:\n",c);
         gen(node -> els);
       }
-      printf("end:\n");
+      printf("end.%d:\n",c);
       break;
     case ND_WHILE:
-      printf("start:\n");
+      c = count();
+      printf("start.%d:\n",c);
       gen(node -> cond);
       printf("  cmp rax, 0\n");   //raxが0のときelse
-      printf("  je end\n");
+      printf("  je end.%d\n",c);
 
       gen(node -> then);
 
-      printf("  jmp start:\n");
-      printf("end:\n");
+      printf("  jmp start.%d:\n",c);
+      printf("end.%d:\n",c);
       break;
   }
 
