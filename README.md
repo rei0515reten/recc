@@ -46,4 +46,7 @@ Finish
 quit
 ```
 
+## IgnoreFile
+"recc.c" file is a old version recc.
+This is not be currenty updated.
 
