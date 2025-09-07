@@ -7,7 +7,7 @@
 #include "recc.h"
 
 //式を左辺値として評価する
-void gen_lval(Node *node) {
+void gen_lval(st_Node *node) {
   if(node -> kind != ND_LVAR) {
     fprintf(stderr,"代入の左辺値が変数ではありません");
     exit(1);
@@ -24,7 +24,7 @@ static int count() {
 }
 
 //x86-64のスタック操作命令
-void gen(Node *node){
+void gen(st_Node *node){
   if(node -> kind == ND_RETURN) {
     gen(node -> lhs);
     printf("  pop rax\n");
@@ -57,7 +57,8 @@ void gen(Node *node){
       return;
     }
 
-    if(node -> kind != ND_IF) {
+    if(node -> kind != ND_IF && node -> kind != ND_WHILE ) 
+    {
       gen(node -> lhs);
       gen(node -> rhs);
 
