@@ -74,6 +74,7 @@ st_Node* new_node_num(int val)
 }
 
 /* パースメイン関数(parse = stmt*) */
+/* EBNF(BNF)記法の考え方を用いてパースしていく */
 void parse() 
 {
   int i = 0;
@@ -85,6 +86,7 @@ void parse()
   code[i] = NULL;
 }
 
+/* パースをするBNF記法のトップ関数(すべての処理はstmtから始まる) */
 //stmt = expr ";" | "return" expr ";" | "if" "(" expr ")" stmt ("else" stmt)?
 //       | "while" "(" expr ")" stmt
 //       | "for" "(" expr? ";" expr? ";" expr? ")" stmt
@@ -98,24 +100,24 @@ st_Node* stmt()
 {
   st_Node* node;
 
-  if(currToken->kind == TK_RETURN) 
+  if(currToken->kind == TK_RETURN)         /* return文 */
   {
     node = calloc(1, sizeof(st_Node));
     node->kind = ND_RETURN;
     currToken = currToken->next;
     node->lhs = expr();
   }
-  else if(currToken->kind == TK_IF) 
+  else if(currToken->kind == TK_IF)       /* if文 */
   {
     node = calloc(1, sizeof(st_Node));
     node->kind = ND_IF;
-    currToken = currToken->next;
+    currToken = currToken->next;          /* 次のトークンへ */
     expect("(");
-    node->cond = expr();
+    node->cond = expr();                  /* 条件式 */
     expect(")");
-    node->then = stmt();
+    node->then = stmt();                  /* if文の本体の処理 */
 
-    if(currToken->kind == TK_ELSE) 
+    if(currToken->kind == TK_ELSE)        /* else文(ifelse文の場合) */
     {
       currToken = currToken->next;
       node->els = stmt();
@@ -268,7 +270,7 @@ st_Node* mul()
   }
 }
 
-
+/* 単項演算(+num,-numなど) */
 //unary = ("+" | "-")? primary
 st_Node* unary()
 {
@@ -283,8 +285,7 @@ st_Node* unary()
     return new_node(ND_SUB, new_node_num(0), unary());
   }
 
-  //＋もーもついていなければprimaryを呼び出す
-  //＋、ーがついててもついてなくても適応する
+  /* +, -がついていなければprimaryを呼び出す(+、-がついててもついてなくても適応する) */
   return primary();
 }
 
@@ -294,9 +295,9 @@ st_Node* primary()
 {
   st_Token* tok;
 
-  tok = consume_ident(tok);
+  tok = is_ident(tok);
 
-  if(tok) 
+  if(tok != NULL) 
   {
     st_Node* node = calloc(1, sizeof(st_Node));
     node->kind = ND_LVAR;
@@ -309,16 +310,13 @@ st_Node* primary()
     }
     else 
     {
-      //localsの初期化
-      if(locals == NULL) 
+      if(locals == NULL)      /* ローカル変数リストが空の場合 */
       {
         locals = calloc(1, sizeof(st_LVar));
-        //リストの最後はNULL
         locals->next = NULL;
       }
 
       lvar = calloc(1, sizeof(st_LVar));
-      //リストの先頭に追加していく
       lvar->next = locals;
       lvar->name = tok->str;
       lvar->len = tok->len;
@@ -341,9 +339,11 @@ st_Node* primary()
   return new_node_num(expect_number());
 }
 
+/* ローカル変数を登録済みリストから探す */
 st_LVar* find_lvar(st_Token* tok) 
 {
-  for(st_LVar* var = locals; var; var = var->next) 
+  st_LVar* var;
+  for(var = locals; var; var = var->next)    /* 既にローカル変数リストの中に登録されているかチェック */
   {
     if(var->len == tok->len && !memcmp(tok->str, var->name, var->len))
     {
@@ -353,14 +353,14 @@ st_LVar* find_lvar(st_Token* tok)
   return NULL;
 }
 
-//変数かそうでないか判定
-st_Token* consume_ident(st_Token* tok) 
+/* 変数かそうでないか判定 */
+st_Token* is_ident(st_Token* tok) 
 {
-  if(currToken->kind == TK_IDENT)
+  if(currToken->kind == TK_IDENT)   /* 識別子(変数)であるか */
   {
-    tok = currToken;
-    currToken = currToken->next;
-    return tok;
+    tok = currToken;                /* 現在のトークンを保存 */
+    currToken = currToken->next;    /* 着目トークンは次のトークンを見る */
+    return tok;                     /* 変数であった場合、変数のトークンを返す */
   }
   else
   {

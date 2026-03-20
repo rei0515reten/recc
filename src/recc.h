@@ -5,7 +5,7 @@
 typedef enum 
 {
   TK_RESERVED,   //記号
-  TK_IDENT,      //識別子
+  TK_IDENT,      //識別子(変数)
   TK_NUM,        //整数
   TK_EOF,        //入力の終わりを表すトークン
   TK_RETURN,
@@ -60,7 +60,7 @@ struct st_Token         /* トークン */
 };
 
 typedef struct st_LVar st_LVar;
-struct st_LVar 
+struct st_LVar         /* ローカル変数 */
 {
   st_LVar* next;       //次の変数かNULL
   char*    name;       //変数の名前
@@ -93,7 +93,7 @@ st_Node* mul();
 st_Node* unary();
 st_Node* primary();
 st_LVar* find_lvar(st_Token* tok);
-st_Token* consume_ident(st_Token* tok);
+st_Token* is_ident(st_Token* tok);
 int is_alnum(char c);
 void gen(st_Node* node);
 

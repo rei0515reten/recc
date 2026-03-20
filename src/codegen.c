@@ -7,8 +7,10 @@
 #include "recc.h"
 
 //式を左辺値として評価する
-void gen_lval(st_Node *node) {
-  if(node -> kind != ND_LVAR) {
+void gen_lval(st_Node *node) 
+{
+  if(node -> kind != ND_LVAR) 
+  {
     fprintf(stderr,"代入の左辺値が変数ではありません");
     exit(1);
   }
@@ -18,14 +20,17 @@ void gen_lval(st_Node *node) {
   printf("  push rax\n");
 }
 
-static int count() {
+static int count() 
+{
   static int i = 1;
   return i++;
 }
 
 //x86-64のスタック操作命令
-void gen(st_Node *node){
-  if(node -> kind == ND_RETURN) {
+void gen(st_Node *node)
+{
+  if(node -> kind == ND_RETURN) 
+  {
     gen(node -> lhs);
     printf("  pop rax\n");
     printf("  mov rsp, rbp\n");
@@ -34,7 +39,8 @@ void gen(st_Node *node){
     return;
   }
 
-  switch (node -> kind) {
+  switch (node -> kind) 
+  {
     case ND_NUM:
       printf("  push %d\n",node -> val);
       return;
@@ -55,21 +61,20 @@ void gen(st_Node *node){
       printf("  mov [rdi], rax\n");
       printf("  push rax\n");
       return;
-    }
+  }
 
-    if(node -> kind != ND_IF && node -> kind != ND_WHILE ) 
-    {
-      gen(node -> lhs);
-      gen(node -> rhs);
+  if(node -> kind != ND_IF && node -> kind != ND_WHILE ) 
+  {
+    gen(node -> lhs);
+    gen(node -> rhs);
 
-      //スタックトップから順にRDI,RAXにpop
-      printf("  pop rdi\n");
-      printf("  pop rax\n");
-    }
+    //スタックトップから順にRDI,RAXにpop
+    printf("  pop rdi\n");
+    printf("  pop rax\n");
+  }
 
-
-
-  switch(node -> kind) {
+  switch(node -> kind) 
+  {
     case ND_ADD:
       printf("  add rax, rdi\n");
       break;
@@ -108,15 +113,19 @@ void gen(st_Node *node){
       gen(node -> cond);          //genでは(node->cond)->kindを見る
       printf("  cmp rax, 0\n");   //raxが0のときelse
 
-      if(node -> els) {
+      if(node -> els) 
+      {
         printf("  je els.%d\n",c);
-      }else{
+      }
+      else
+      {
         printf("  je end.%d\n",c);
       }
 
       gen(node -> then);
 
-      if(node -> els){
+      if(node -> els)
+      {
         printf("  jmp end.%d\n",c);
         printf("els.%d:\n",c);
         gen(node -> els);

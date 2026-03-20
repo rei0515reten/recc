@@ -4,9 +4,9 @@ assert(){
   expected="$1"
   input="$2"
 
-  ./recc "$input" > tmp.s
-  cc -o tmp tmp.s
-  ./tmp
+  ./recc "$input" > tmp.s      # 自作コンパイラでC言語コードをコンパイルしてアセンブリコードを生成
+  cc -o tmp tmp.s              # アセンブリコードをコンパイルして実行ファイルを生成
+  ./tmp                        # 実行
   actual="$?"
 
   if [ "$actual" = "$expected" ]; then
