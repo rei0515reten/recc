@@ -134,15 +134,19 @@ void gen(st_Node *node)
       break;
     case ND_WHILE:
       c = count();
+      printf("  push rax\n");           // whileの初期値（ループ未実行時はwhile条件対象の変数値を返す）
       printf("start.%d:\n",c);
       gen(node -> cond);
-      printf("  cmp rax, 0\n");   //raxが0のときelse
+      printf("  pop rax\n");          // 条件結果をpop
+      printf("  cmp rax, 0\n");
       printf("  je end.%d\n",c);
 
+      printf("  pop rax\n");          // 前回の本体結果（または初期値0）を破棄
       gen(node -> then);
 
-      printf("  jmp start.%d:\n",c);
+      printf("  jmp start.%d\n",c);
       printf("end.%d:\n",c);
+      printf("  pop rax\n");          // 本体の最終結果をraxに取得
       break;
   }
 
